@@ -3,6 +3,7 @@
   <PropertyGroup>
     <RootNamespace>CleanArchStarter.Web</RootNamespace>
     <AssemblyName>CleanArchStarter.Web</AssemblyName>
+    <TargetFramework>net9.0</TargetFramework>
   </PropertyGroup>
 
   <ItemGroup>
