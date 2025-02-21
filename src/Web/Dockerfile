@@ -9,19 +9,19 @@ FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 RUN curl -sL https://deb.nodesource.com/setup_16.x | bash -  # Node.js için güncel sürümü kullanıyoruz
 RUN apt install -y nodejs
 WORKDIR /src
-COPY ["src/WebUI/WebUI.csproj", "src/WebUI/"]
+COPY ["src/Web/Web.csproj", "src/Web/"]
 COPY ["src/Application/Application.csproj", "src/Application/"]
 COPY ["src/Domain/Domain.csproj", "src/Domain/"]
 COPY ["src/Infrastructure/Infrastructure.csproj", "src/Infrastructure/"]
-RUN dotnet restore "src/WebUI/WebUI.csproj"
+RUN dotnet restore "src/Web/Web.csproj"
 COPY . . 
-WORKDIR "/src/src/WebUI"
-RUN dotnet build "WebUI.csproj" -c Release -o /app/build
+WORKDIR "/src/src/Web"
+RUN dotnet build "Web.csproj" -c Release -o /app/build
 
 FROM build AS publish
-RUN dotnet publish "WebUI.csproj" -c Release -o /app/publish
+RUN dotnet publish "Web.csproj" -c Release -o /app/publish
 
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish . 
-ENTRYPOINT ["dotnet", "CleanArchitecture.WebUI.dll"]
+ENTRYPOINT ["dotnet", "CleanArchitecture.Web.dll"]
