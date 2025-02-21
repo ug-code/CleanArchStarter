@@ -1,41 +1,23 @@
-# .NET 8.0 Tabanlı Dockerfile
-# İlk aşama: Çalışma zamanı ortamı
-FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
-ENV ASPNETCORE_URLS=https://+:8080;http://+:8081
+# Use the official .NET 9 SDK image as the build environment
+FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build-env
+
+# Set the working directory
 WORKDIR /app
-EXPOSE 8080
-EXPOSE 8081
 
-# İkinci aşama: Derleme ve bağımlılıkların yüklenmesi
-FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
-RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
-RUN curl -sL https://deb.nodesource.com/setup_16.x | bash -  # Node.js için güncel sürüm
-RUN apt-get install -y nodejs
+# Copy the csproj and restore any dependencies
+COPY *.csproj ./
+RUN dotnet restore
 
-WORKDIR /src
+# Copy the entire project and build it
+COPY . ./
+RUN dotnet publish -c Release -o out
 
-# Bağımlı projeleri sırayla kopyalıyoruz
-COPY ["src/Application/Application.csproj", "src/Application/"]
-COPY ["src/Domain/Domain.csproj", "src/Domain/"]
-COPY ["src/Infrastructure/Infrastructure.csproj", "src/Infrastructure/"]
-COPY ["src/Web/Web.csproj", "src/Web/"]
-
-# Projeleri restore ediyoruz
-RUN dotnet restore "src/Web/Web.csproj"
-
-# Tüm kaynak kodlarını kopyalıyoruz
-COPY . .
-WORKDIR "/src/src/Web"
-
-# Projeyi derliyoruz
-RUN dotnet build "Web.csproj" -c Release -o /app/build
-
-# Yayınlama aşaması
-FROM build AS publish
-RUN dotnet publish "Web.csproj" -c Release -o /app/publish
-
-# Son aşama: Çalıştırma ortamı
-FROM base AS final
+# Build the runtime image
+FROM mcr.microsoft.com/dotnet/aspnet:9.0
 WORKDIR /app
-COPY --from=publish /app/publish .
-ENTRYPOINT ["dotnet", "CleanArchitecture.Web.dll"]
+COPY --from=build-env /app/out .
+
+# Expose the port the app runs on
+EXPOSE 80
+
+# Start the application
